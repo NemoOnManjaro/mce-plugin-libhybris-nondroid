@@ -2,47 +2,41 @@
 # Maintainer: Chupligin Sergey (NeoChapay) <neochapay@gmail.com>
 
 _host="github.com"
-_project=sailfish-on-latte
+_project=mer-hybris
 _basename=mce-plugin-libhybris
 _branch=master
 
 _gitname=$_basename
-pkgname=$_basename-nonandroid-git
+pkgname=$_basename-nonandroid
 
-pkgver=1.14.3.r5.g728aa72
+pkgver=1.14.3
 
 pkgrel=1
 pkgdesc="nonandroid plugin for Mode Control Entity"
 arch=('x86_64' 'aarch64')
-url="https://$_host/$_project/$_gitname#branch=$_branch"
+url="https://$_host/$_project/$_gitname"
 license=('LGPL-2.1-only')
 depends=('mce' 'glib2')
-makedepends=('git')
-provides=("${pkgname%-git}")
-conflicts=("${pkgname%-git}")
-source=("${pkgname}::git+${url}")
-md5sums=('SKIP')
 
-pkgver() {
-  cd "${srcdir}/${pkgname}"
-  ( set -o pipefail
-    git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-  ) 2>/dev/null
-}
+source=("${url}/archive/refs/tags/$pkgver.tar.gz"
+    "0001-add_debian_build.patch"
+    "0002-add_breath_type_quirk.patch")
+sha256sums=('3a0444266cc4cf418dfba27ffa3bd20cfeb0c58d6677726397f93417ce1447de'
+    '274b3e1eafef33e1619f217d97bc3a1f5d4205df9db6088704b7ea1d0262ba08'
+    '25d71c43cd4487d4da21beab1cd530842c89e4cd9b6b2e71b8d1c7b127035036')
 
 prepare() {
-  cd "${srcdir}/${pkgname}"
-  git checkout nondroid
+  cd $_basename-$pkgver
+  patch -p1 --input="${srcdir}/0001-add_debian_build.patch"
+  patch -p1 --input="${srcdir}/0002-add_breath_type_quirk.patch"
 }
 
 build() {
-  cd "${srcdir}/${pkgname}"
+  cd $_basename-$pkgver
   make ENABLE_HYBRIS_SUPPORT=n
 }
 
 package() {
-  cd "${srcdir}/${pkgname}"
-  mkdir -p $pkgdir/usr/lib/mce/modules
-  install -m755 hybris.so $pkgdir/usr/lib/mce/modules/
+  cd $_basename-$pkgver
+  make install DESTDIR=$pkgdir
 }
